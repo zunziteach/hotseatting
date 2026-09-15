@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>생각쑥쑥 핫시팅(Hot-seating) 도서관</title>
+  <meta name="description" content="초등학생 대상 이야기 속 등장인물과 함께하는 1:1 실시간 영상 통화 핫시팅 독서 교육 플랫폼">
+
+  <!-- 웹 폰트 (Pretendard, Gaegu, Gowun Dodum) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: '#FAF7F2',
+            latte: '#F3ECE2',
+            peach: {
+              50: '#FFF7F2',
+              100: '#FFE7D6',
+              200: '#FFCEB0',
+              500: '#E07A5F',
+              600: '#C86146'
+            },
+            mint: {
+              50: '#F0F9F5',
+              100: '#E3F2E9',
+              200: '#C2E5D3',
+              500: '#5A9E7F',
+              600: '#468368'
+            },
+            butter: {
+              50: '#FEFDF5',
+              100: '#FFF8DB',
+              200: '#FDEEAB',
+              500: '#D4A317'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- PDF.js & JSZip CDN (PDF/PPTX 파싱용) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <!-- 커스텀 스타일시트 -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="min-h-screen flex flex-col bg-[#F7F1E6] text-[#2C1810]">
+
+  <!-- 전역 상단 내비게이션 바 (도서관 원목 & 황동 테마) -->
+  <header class="w-full library-header sticky top-0 z-30 transition-all shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
+      <!-- 로고 및 서비스명 -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="window.app.showScreen('screen-library')">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#D4AF37] to-[#F59E0B] flex items-center justify-center text-xl shadow-md border border-[#FDE68A]/60">
+          📚
+        </div>
+        <div>
+          <span class="text-xs font-bold text-[#FDE68A] font-gaegu tracking-wider">클래식 독서 교육 도서관</span>
+          <h1 class="text-lg sm:text-xl font-bold text-[#FFF9F0] tracking-tight font-gowun flex items-center gap-1.5 drop-shadow-xs">
+            생각쑥쑥 <span class="text-[#F59E0B]">핫시팅(Hot-seating)</span> 도서관
+          </h1>
+        </div>
+      </div>
+
+      <!-- 우측 교사 모드 전환 버튼 -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <button id="btn-switch-teacher-mode" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#4A2818] hover:bg-[#5E331E] text-[#FDE68A] border border-[#8C5832] text-xs sm:text-sm font-semibold transition-all shadow-xs">
+          <span>👨‍🏫</span>
+          <span>교사 모드</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 메인 콘텐츠 영역 -->
+  <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 relative">
+
+    <!-- ====================================================================
+         화면 1: 학생 진입 및 이름 입력 (screen-entrance)
+         ==================================================================== -->
+    <section id="screen-entrance" class="py-8 sm:py-16 flex flex-col items-center justify-center min-h-[75vh]">
+      <div class="w-full max-w-md bg-[#FAF5EB] border-4 border-[#8C5832] rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+        <!-- 배경 장식 앤틱 서재 문양 -->
+        <div class="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-[#E8D9C5]/50 -z-10 blur-xl"></div>
+        <div class="absolute -bottom-12 -left-12 w-40 h-40 rounded-full bg-[#D7C4AC]/60 -z-10 blur-xl"></div>
+
+        <div class="text-center mb-6">
+          <span class="inline-block px-3.5 py-1 rounded-full bg-[#4A2818] text-[#FDE68A] text-xs font-bold mb-2.5 border border-[#8C5832] shadow-xs">
+            ✨ 신비로운 책 속 웹툰 인물과의 만남
+          </span>
+          <h2 class="text-2xl sm:text-3xl font-bold font-gowun text-[#2C1810]">
+            도서관에 오신 것을<br>환영합니다!
+          </h2>
+          <p class="text-xs sm:text-sm text-[#6E5343] mt-2 font-medium">
+            오늘 도서관을 방문한 너의 멋진 이름을 알려줘!
+          </p>
+        </div>
+
+        <form id="form-student-entrance" class="space-y-5">
+          <!-- 아바타 선택 -->
+          <div>
+            <label class="block text-xs font-bold text-[#5C3D2E] mb-2 text-center">
+              내 아바타 친구를 골라보세요
+            </label>
+            <div class="flex justify-center gap-2 sm:gap-3">
+              <button type="button" data-avatar="🌱" class="avatar-choice-btn w-11 h-11 rounded-2xl bg-[#FFFDF9] border-2 border-[#8C5832] bg-[#F5E5D0] scale-110 text-xl flex items-center justify-center transition shadow-xs">
+                🌱
+              </button>
+              <button type="button" data-avatar="🐰" class="avatar-choice-btn w-11 h-11 rounded-2xl bg-[#FFFDF9] border-2 border-[#D7C4AC] text-xl flex items-center justify-center transition shadow-xs hover:bg-[#F5EADB]">
+                🐰
+              </button>
+              <button type="button" data-avatar="🦁" class="avatar-choice-btn w-11 h-11 rounded-2xl bg-[#FFFDF9] border-2 border-[#D7C4AC] text-xl flex items-center justify-center transition shadow-xs hover:bg-[#F5EADB]">
+                🦁
+              </button>
+              <button type="button" data-avatar="🚀" class="avatar-choice-btn w-11 h-11 rounded-2xl bg-[#FFFDF9] border-2 border-[#D7C4AC] text-xl flex items-center justify-center transition shadow-xs hover:bg-[#F5EADB]">
+                🚀
+              </button>
+              <button type="button" data-avatar="🌟" class="avatar-choice-btn w-11 h-11 rounded-2xl bg-[#FFFDF9] border-2 border-[#D7C4AC] text-xl flex items-center justify-center transition shadow-xs hover:bg-[#F5EADB]">
+                🌟
+              </button>
+            </div>
+            <input type="hidden" id="selected-student-avatar" value="🌱">
+          </div>
+
+          <!-- 이름 입력란 -->
+          <div>
+            <label for="student-name-input" class="block text-xs font-bold text-[#4A2818] mb-1.5">
+              학생 이름
+            </label>
+            <input
+              type="text"
+              id="student-name-input"
+              class="w-full px-4 py-3 rounded-2xl border-2 border-[#8C5832]/60 focus:border-[#8C5832] focus:ring-4 focus:ring-[#8C5832]/20 outline-none text-[#2C1810] font-semibold text-center text-base placeholder-[#A89282] bg-white transition"
+              placeholder="예: 김민준, 하늘초 이슬이"
+              required
+              maxlength="15"
+              autocomplete="off"
+            >
+          </div>
+
+          <!-- 도서관 문 열림 애니메이션 컨테이너 -->
+          <div id="door-gate-container" class="door-container relative h-16 w-full rounded-2xl overflow-hidden shadow-lg">
+            <button
+              type="submit"
+              class="w-full h-full library-door-btn font-bold text-base flex items-center justify-center gap-2 transition"
+            >
+              <span>🚪</span>
+              <span>도서관 문 열고 들어가기</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         화면 2: 도서관 책장 서가 (screen-library)
+         ==================================================================== -->
+    <section id="screen-library" class="hidden py-4 sm:py-6 space-y-6 zoom-in-entrance">
+      <div class="bg-gradient-to-r from-[#FAF5EB] via-[#F3ECE0] to-[#E9DDCB] border-2 border-[#8C5832]/60 rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md">
+        <div class="flex items-center gap-3 text-center sm:text-left">
+          <div class="w-12 h-12 rounded-2xl bg-[#4A2818] shadow-md border border-[#D4AF37] flex items-center justify-center text-2xl text-[#FDE68A]">
+            🏛️
+          </div>
+          <div>
+            <h2 id="library-student-greeting" class="text-lg sm:text-xl font-bold text-[#2C1810] font-gowun">
+              꿈나무 어린이, 어서오렴!
+            </h2>
+            <p class="text-xs sm:text-sm text-[#5C3D2E] mt-0.5 font-medium">
+              원목 책장에 꽂힌 양장본 책을 클릭해 예쁜 웹툰 인물을 만나고, 1:1 화상 대화(핫시팅)를 시작해 보세요.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="btn-student-change-name" class="px-3.5 py-1.5 rounded-xl bg-[#FFFDF9] text-[#5C3D2E] hover:bg-[#F5EADB] border border-[#D7C4AC] text-xs font-semibold transition shadow-2xs">
+            이름 바꾸기
+          </button>
+        </div>
+      </div>
+
+      <!-- 3D 원목 책장 영역 -->
+      <div class="bookshelf-room rounded-3xl p-6 sm:p-10 shadow-2xl relative">
+        <div class="text-center mb-6">
+          <span class="inline-block px-4 py-1.5 rounded-full bg-[#321B11] text-[#FDE68A] text-xs font-bold shadow-md border border-[#D4AF37]">
+            📖 웹툰 인물이 살아 숨 쉬는 생각쑥쑥 고서 서가
+          </span>
+        </div>
+
+        <!-- 책장 선반 그리드 -->
+        <div id="bookshelf-grid" class="flex flex-wrap items-end justify-center gap-8 sm:gap-10 pb-4">
+          <!-- JS 동적 생성 -->
+        </div>
+
+        <!-- 3D 원목 선반 판자 -->
+        <div class="shelf-board h-7 w-full rounded-lg mt-3"></div>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         화면 3: 핫시팅 영상 통화 룸 (screen-hotseat-room)
+         ==================================================================== -->
+    <section id="screen-hotseat-room" class="hidden py-2 sm:py-4 space-y-4">
+      <!-- 화상 통화 상단 제어 바 (HUD) -->
+      <div class="bg-[#FAF5EB] border-2 border-[#8C5832]/60 rounded-2xl px-4 py-3 flex items-center justify-between shadow-md">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <span class="relative flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+            <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-300">
+              실시간 핫시팅 중
+            </span>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-[#2C1810] flex items-center gap-1.5 font-gowun">
+              <span id="call-character-name">심청</span>
+              <span class="text-xs text-[#6E5343] font-normal">/ 《<span id="call-book-title">심청전</span>》</span>
+            </h3>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- 통화 시간 -->
+          <div class="text-xs font-mono font-bold text-[#4A2818] bg-[#F3ECE0] px-2.5 py-1 rounded-lg border border-[#D7C4AC] flex items-center gap-1">
+            <span>⏱️</span>
+            <span id="call-duration-timer">00:00</span>
+          </div>
+
+          <!-- 웹캠 표정 반응 토글 버튼 -->
+          <button id="btn-toggle-webcam" class="px-2.5 py-1 rounded-xl bg-[#FFFDF9] hover:bg-[#F5EADB] text-[#5C3D2E] text-xs font-semibold transition border border-[#D7C4AC] flex items-center gap-1 shadow-2xs">
+            <span>📷 웹캠 켜기</span>
+          </button>
+
+          <!-- 음성 읽어주기(TTS) 토글 -->
+          <button id="btn-toggle-tts" class="px-2.5 py-1 rounded-xl bg-[#FFFDF9] hover:bg-[#F5EADB] text-[#5C3D2E] text-xs font-semibold transition border border-[#D7C4AC] flex items-center gap-1 shadow-2xs">
+            <span class="text-emerald-700">🔊 음성 켬</span>
+          </button>
+
+          <!-- 학생 태그 -->
+          <span id="call-student-tag" class="hidden sm:inline-block text-xs font-semibold px-2.5 py-1 bg-[#4A2818] text-[#FDE68A] rounded-xl border border-[#8C5832]">
+            🌱 학생 통화 중
+          </span>
+
+          <!-- 통화 종료 버튼 -->
+          <button id="btn-call-hangup" class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1 shadow-sm transition transform active:scale-95">
+            <span>📞</span>
+            <span>통화 종료</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 영상 통화 메인 화면: 2단 분할 (좌측 웹툰체 인물 영역 / 우측 실시간 대화창) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 min-h-[580px]">
+        
+        <!-- 좌측: 웹툰체 인물 모습 영역 (고화질 웹툰 + 표정 변화 + 고정 배경) -->
+        <div class="lg:col-span-6 flex flex-col space-y-2">
+          <div class="relative w-full flex-1 min-h-[420px] sm:min-h-[480px] video-frame rounded-3xl overflow-hidden shadow-2xl flex flex-col items-center justify-center p-2">
+            
+            <!-- 상단 상태 오버레이 (감정 뱃지 & 웹툰 모드) -->
+            <div class="absolute top-4 left-4 z-20 flex flex-wrap items-center gap-2">
+              <div id="character-emotion-badge" class="video-hud-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-sm bg-[#FAF0E6] text-[#78350F] border-[#D97706]/40">
+                <span>😊</span>
+                <span>기쁨 · 반가움</span>
+              </div>
+              
+              <!-- 참고 이미지 적용 인디케이터 -->
+              <div id="reference-image-indicator" class="hidden video-hud-badge inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold shadow-xs bg-[#FEF3C7] text-[#92400E] border-[#F59E0B]/50">
+                <img id="reference-thumb-preview" class="w-4 h-4 rounded-full object-cover border border-[#D97706]" src="" alt="참고">
+                <span>🎨 커스텀 웹툰 적용</span>
+              </div>
+            </div>
+
+            <!-- 우측 상단 컨트롤 (참고 이미지 등록) -->
+            <div class="absolute top-4 right-4 z-20 flex items-center gap-2">
+              <button
+                type="button"
+                id="btn-student-upload-ref"
+                class="video-hud-badge px-2.5 py-1 rounded-xl text-xs font-bold text-[#5C3D2E] hover:bg-[#F5EADB] border border-[#D7C4AC] shadow-xs transition flex items-center gap-1"
+                title="학생이 참고 이미지나 그림을 업로드하여 웹툰 인물 외형에 반영"
+              >
+                <span>📸</span>
+                <span>참고 사진</span>
+              </button>
+              <input type="file" id="input-student-ref-image" accept="image/*" class="hidden">
+              
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/50 text-[#FDE68A] border border-[#D4AF37]/50 backdrop-blur-xs">
+                HD 웹툰체
+              </span>
+            </div>
+
+            <!-- 2D 캔버스 웹툰 인터랙티브 캐릭터 -->
+            <canvas id="character-avatar-canvas" class="w-full h-full max-h-[480px] object-contain rounded-2xl"></canvas>
+
+            <!-- 웹캠 PIP 미니 뷰 (학생 표정 인식용) -->
+            <div id="webcam-preview-container" class="hidden absolute bottom-16 right-4 z-20 w-28 h-20 rounded-2xl overflow-hidden border-2 border-emerald-400 shadow-lg bg-black">
+              <video id="webcam-preview-video" class="w-full h-full object-cover" muted autoplay playsinline></video>
+              <span class="absolute bottom-1 left-1 bg-black/60 text-[9px] text-emerald-300 font-bold px-1.5 py-0.5 rounded">
+                ● 내 얼굴
+              </span>
+            </div>
+
+            <!-- 하단 인물 자막/설명 바 -->
+            <div class="absolute bottom-3 left-3 right-3 z-20">
+              <div class="video-hud-badge p-2.5 rounded-2xl shadow-xs text-center bg-black/45 text-white backdrop-blur-md border-white/20">
+                <p class="text-xs text-[#FAF5EB] font-medium">
+                  💡 질문과 감정(기쁨, 진지함, 슬픔, 엄격, 놀람)에 따라 고화질 웹툰 일러스트가 실시간으로 전환됩니다!
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 실시간 감정 표정 변환 툴바 (배경은 고정된 채 표정만 즉시 변화 확인) -->
+          <div class="flex items-center justify-between gap-1.5 px-3 py-2 bg-[#FAF5EB] border-2 border-[#8C5832]/60 rounded-2xl shadow-xs text-xs">
+            <span class="font-bold text-[#5C3D2E] flex items-center gap-1 shrink-0">
+              <span>🎭</span>
+              <span>표정 변환:</span>
+            </span>
+            <div class="flex items-center gap-1.5 overflow-x-auto">
+              <button type="button" class="emotion-quick-btn px-2.5 py-1 rounded-xl bg-white border border-[#D7C4AC] hover:bg-[#F5EADB] text-[#78350F] font-bold text-xs shadow-2xs" onclick="window.studentController.setAvatarEmotion('happy')">
+                😊 기쁨
+              </button>
+              <button type="button" class="emotion-quick-btn px-2.5 py-1 rounded-xl bg-white border border-[#D7C4AC] hover:bg-[#F5EADB] text-[#1E3A8A] font-bold text-xs shadow-2xs" onclick="window.studentController.setAvatarEmotion('serious')">
+                🧐 진지함
+              </button>
+              <button type="button" class="emotion-quick-btn px-2.5 py-1 rounded-xl bg-white border border-[#D7C4AC] hover:bg-[#F5EADB] text-[#0369A1] font-bold text-xs shadow-2xs" onclick="window.studentController.setAvatarEmotion('sad')">
+                🥺 슬픔
+              </button>
+              <button type="button" class="emotion-quick-btn px-2.5 py-1 rounded-xl bg-white border border-[#D7C4AC] hover:bg-[#F5EADB] text-[#991B1B] font-bold text-xs shadow-2xs" onclick="window.studentController.setAvatarEmotion('warning')">
+                ⚠️ 엄격
+              </button>
+              <button type="button" class="emotion-quick-btn px-2.5 py-1 rounded-xl bg-white border border-[#D7C4AC] hover:bg-[#F5EADB] text-[#854D0E] font-bold text-xs shadow-2xs" onclick="window.studentController.setAvatarEmotion('surprised')">
+                😲 놀람
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 우측: 대화 및 음성 채팅 영역 (도서관 양피지 서재 스타일) -->
+        <div class="lg:col-span-6 flex flex-col library-chat-container rounded-3xl p-4 sm:p-5 shadow-2xl min-h-[480px]">
+          
+          <!-- 상단 안내 힌트 -->
+          <div class="pb-2 mb-2 border-b border-[#D7C4AC] flex items-center justify-between text-xs text-[#5C3D2E]">
+            <span class="flex items-center gap-1 font-bold">
+              <span>💬</span>
+              <span>1:1 핫시팅 인터뷰 서책 대화</span>
+            </span>
+            <span class="text-[11px] text-[#78350F] font-bold bg-[#FAF0E6] px-2.5 py-0.5 rounded border border-[#D97706]/40">
+              밑줄 친 문장은 원작 책에 나오는 사실이에요!
+            </span>
+          </div>
+
+          <!-- 메시지 스크롤 컨테이너 -->
+          <div id="hotseat-chat-messages" class="flex-1 overflow-y-auto space-y-3.5 pr-1 py-2 min-h-[300px] max-h-[380px]">
+            <!-- JS 동적 메시지 렌더링 -->
+          </div>
+
+          <!-- 추천 질문 칩 바 -->
+          <div class="pt-2 pb-1">
+            <div class="text-[11px] font-bold text-[#5C3D2E] mb-1 flex items-center gap-1">
+              <span>💡</span>
+              <span>무엇을 물어볼지 고민된다면?</span>
+            </div>
+            <div id="chat-suggestion-chips" class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              <!-- JS 동적 생성 -->
+            </div>
+          </div>
+
+          <!-- 입력 폼: 텍스트 및 음성인식(STT) -->
+          <form id="form-chat-input" class="mt-2 pt-2 border-t border-[#D7C4AC] flex items-center gap-2">
+            <!-- 마이크 버튼 (STT) -->
+            <button
+              type="button"
+              id="btn-mic-toggle"
+              class="w-11 h-11 rounded-2xl bg-[#FAF0E6] hover:bg-[#F5E5CF] text-[#78350F] flex items-center justify-center text-lg transition shrink-0 shadow-xs border-2 border-[#D97706]/60"
+              title="마이크로 음성 질문하기"
+            >
+              🎤
+            </button>
+
+            <!-- 텍스트 입력창 -->
+            <input
+              type="text"
+              id="chat-text-input"
+              class="flex-1 px-4 py-2.5 rounded-2xl border-2 border-[#8C5832]/50 focus:border-[#8C5832] focus:ring-4 focus:ring-[#8C5832]/20 outline-none text-sm text-[#2C1810] placeholder-[#A89282] bg-white transition font-medium"
+              placeholder="인물에게 물어보고 싶은 이야기를 입력하세요..."
+              autocomplete="off"
+            >
+
+            <!-- 전송 버튼 -->
+            <button
+              type="submit"
+              id="btn-chat-send"
+              class="px-4 py-2.5 rounded-2xl bg-[#653A22] hover:bg-[#542D16] text-[#FFF9F0] font-bold text-sm flex items-center gap-1.5 transition shrink-0 shadow-md active:scale-95 border border-[#8C5832]"
+            >
+              <span>전송</span>
+              <span>🚀</span>
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         화면 4: 교사 모드 (screen-teacher)
+         ==================================================================== -->
+    <section id="screen-teacher" class="hidden py-4 sm:py-6 space-y-6">
+      <!-- 교사 상단 대시보드 헤더 -->
+      <div class="bg-gradient-to-r from-stone-800 to-stone-900 text-white rounded-3xl p-6 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold">
+              👨‍🏫 교사용 관리 센터
+            </span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-bold font-gowun">
+            핫시팅 도서 관리 & 실시간 모니터링 대시보드
+          </h2>
+          <p class="text-xs text-stone-300 mt-1">
+            새로운 책과 인물, 웹툰 참고 이미지, 음성 프로필을 설정하고 학생들의 대화를 모니터링합니다.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="btn-exit-teacher-mode" class="px-4 py-2 rounded-xl bg-stone-700 hover:bg-stone-600 text-stone-200 text-xs font-semibold transition border border-stone-600">
+            학생 화면으로 나가기 🚪
+          </button>
+        </div>
+      </div>
+
+      <!-- 탭 내비게이션 바 -->
+      <div class="flex items-center gap-2 border-b border-amber-200/80 pb-2">
+        <button data-tab="books" class="teacher-tab-btn px-4 py-2 text-sm font-semibold rounded-xl bg-amber-100 text-amber-900 shadow-xs border border-amber-300/80 transition">
+          📚 도서 및 인물 관리
+        </button>
+        <button data-tab="monitor" class="teacher-tab-btn px-4 py-2 text-sm font-semibold rounded-xl text-stone-600 hover:bg-stone-100 transition">
+          📊 실시간 학생 모니터링
+        </button>
+        <button data-tab="settings" class="teacher-tab-btn px-4 py-2 text-sm font-semibold rounded-xl text-stone-600 hover:bg-stone-100 transition">
+          ⚙️ 구글 시트 & AI 연동 설정
+        </button>
+      </div>
+
+      <!-- 탭 1: 도서 및 인물 관리 (tab-content-books) -->
+      <div id="tab-content-books" class="teacher-tab-content space-y-6">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div>
+            <h3 class="text-lg font-bold text-stone-800">등록된 도서 목록</h3>
+            <p class="text-xs text-stone-500">학생들의 도서관 책장에 전시되는 책들입니다.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-reset-default-books" class="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold border border-stone-300 transition">
+              기본 도서 복원
+            </button>
+            <button id="btn-new-book" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
+              <span>➕</span>
+              <span>새 도서 추가하기</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 도서 카드 그리드 -->
+        <div id="teacher-books-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- JS 동적 생성 -->
+        </div>
+      </div>
+
+      <!-- 탭 2: 실시간 대화 모니터링 (tab-content-monitor) -->
+      <div id="tab-content-monitor" class="teacher-tab-content hidden space-y-4">
+        <!-- 모니터링 툴바 -->
+        <div class="bg-white border border-amber-200 rounded-2xl p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
+          <div class="flex items-center gap-3 w-full md:w-auto">
+            <span class="text-xs font-bold text-stone-700 whitespace-nowrap">
+              실시간 기록: <span id="monitor-log-count" class="text-amber-700">0건</span>
+            </span>
+            <input
+              type="text"
+              id="log-search-input"
+              class="w-full md:w-64 px-3 py-1.5 text-xs rounded-xl border border-stone-200 focus:border-amber-400 outline-none"
+              placeholder="학생명, 도서명, 질문 검색..."
+            >
+            <label class="inline-flex items-center gap-1.5 text-xs text-stone-600 cursor-pointer whitespace-nowrap">
+              <input type="checkbox" id="log-warning-only" class="rounded text-amber-600 focus:ring-amber-500">
+              <span>⚠️ 경고 발생만 보기</span>
+            </label>
+          </div>
+
+          <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+            <button id="btn-export-logs-csv" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-semibold transition">
+              CSV 파일로 저장 📥
+            </button>
+            <button id="btn-clear-logs" class="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-semibold transition">
+              기록 비우기
+            </button>
+          </div>
+        </div>
+
+        <!-- 모니터링 테이블 -->
+        <div class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-xs">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-[#FFF8F0] border-b border-amber-200 text-[11px] font-bold text-stone-700 uppercase tracking-wider">
+                  <th class="py-3 px-3">시간</th>
+                  <th class="py-3 px-3">학생명</th>
+                  <th class="py-3 px-3">도서 / 인물</th>
+                  <th class="py-3 px-3">학생 질문</th>
+                  <th class="py-3 px-3">인물 답변 (밑줄: 책 내용)</th>
+                  <th class="py-3 px-3 text-center">감정</th>
+                  <th class="py-3 px-3 text-center">상태 / 경고</th>
+                </tr>
+              </thead>
+              <tbody id="table-logs-body">
+                <!-- JS 동적 생성 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 탭 3: 연동 설정 (tab-content-settings) -->
+      <div id="tab-content-settings" class="teacher-tab-content hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- 좌측: 설정 입력 폼 -->
+          <div class="lg:col-span-6 bg-white border border-amber-200 rounded-3xl p-6 shadow-xs space-y-5">
+            <h3 class="text-base font-bold text-stone-800 border-b border-stone-100 pb-2">
+              ⚙️ 교사 환경 및 외부 연동 설정
+            </h3>
+
+            <form id="form-teacher-settings" class="space-y-4">
+              <!-- 구글 시트 웹앱 URL -->
+              <div>
+                <label class="block text-xs font-bold text-stone-700 mb-1">
+                  구글 시트 Apps Script 웹 앱 URL
+                </label>
+                <input
+                  type="url"
+                  id="setting-sheet-webhook-url"
+                  class="w-full px-3.5 py-2 text-xs rounded-xl border border-stone-200 focus:border-amber-400 outline-none font-mono"
+                  placeholder="https://script.google.com/macros/s/.../exec"
+                >
+                <p class="text-[11px] text-stone-500 mt-1">
+                  구글 시트에 학생 질문과 AI 답변이 실시간으로 자동 기록됩니다.
+                </p>
+                <div class="mt-2">
+                  <button type="button" id="btn-test-sheet" class="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold border border-stone-300">
+                    연동 테스트 전송
+                  </button>
+                </div>
+              </div>
+
+              <!-- Gemini API Key (선택 사항) -->
+              <div>
+                <label class="block text-xs font-bold text-stone-700 mb-1">
+                  Google Gemini API Key (선택 사항)
+                </label>
+                <input
+                  type="password"
+                  id="setting-gemini-api-key"
+                  class="w-full px-3.5 py-2 text-xs rounded-xl border border-stone-200 focus:border-amber-400 outline-none font-mono"
+                  placeholder="AIzaSy..."
+                >
+                <p class="text-[11px] text-stone-500 mt-1">
+                  API Key를 입력하면 Gemini LLM이 활성화되어 더 풍성한 자유 대화가 가능합니다. (미입력 시에도 내장 스마트 엔진으로 완벽 작동)
+                </p>
+              </div>
+
+              <!-- NanoBanana / FaceSwap 외부 모델 연동 (선택 사항) -->
+              <div>
+                <label class="block text-xs font-bold text-stone-700 mb-1">
+                  🎨 나노바나나(NanoBanana) / FaceSwap API 엔드포인트 URL (선택 사항)
+                </label>
+                <input
+                  type="url"
+                  id="setting-nanobanana-api-url"
+                  class="w-full px-3.5 py-2 text-xs rounded-xl border border-stone-200 focus:border-amber-400 outline-none font-mono"
+                  placeholder="https://api.nanobanana.ai/v1/faceswap"
+                >
+                <p class="text-[11px] text-stone-500 mt-1">
+                  외부 고성능 페이스 스왑/인페인팅 API URL을 지정할 수 있습니다. (미설정 시 내장 고속 실시간 페이스 스와핑 엔진으로 자동 작동)
+                </p>
+              </div>
+
+              <!-- 교사 비밀번호 변경 -->
+              <div>
+                <label class="block text-xs font-bold text-stone-700 mb-1">
+                  교사 모드 진입 비밀번호
+                </label>
+                <input
+                  type="text"
+                  id="setting-teacher-passcode"
+                  class="w-full px-3.5 py-2 text-xs rounded-xl border border-stone-200 focus:border-amber-400 outline-none font-mono"
+                  placeholder="1234"
+                  value="1234"
+                >
+              </div>
+
+              <div class="pt-2">
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition">
+                  설정 내용 저장하기
+                </button>
+              </div>
+            </form>
+
+            <!-- 백업 및 복원 -->
+            <div class="pt-4 border-t border-stone-100 flex items-center justify-between">
+              <span class="text-xs text-stone-600 font-semibold">도서 및 설정 데이터 백업:</span>
+              <div class="flex items-center gap-2">
+                <button id="btn-export-data" class="px-2.5 py-1 text-xs rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium">
+                  JSON 내보내기
+                </button>
+                <button id="btn-import-data" class="px-2.5 py-1 text-xs rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium">
+                  JSON 불러오기
+                </button>
+                <input type="file" id="file-import-data" accept=".json" class="hidden">
+              </div>
+            </div>
+          </div>
+
+          <!-- 우측: 구글 시트 연동 안내 & Apps Script 코드 제공 -->
+          <div class="lg:col-span-6 bg-[#FAF7F0] border border-amber-200/90 rounded-3xl p-6 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold text-stone-800 flex items-center gap-1.5">
+                <span>📋</span>
+                <span>구글 시트 연동용 Google Apps Script 코드</span>
+              </h3>
+              <button id="btn-copy-script" class="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs">
+                코드 복사하기 📋
+              </button>
+            </div>
+
+            <p class="text-xs text-stone-600 leading-relaxed">
+              Google Sheet의 <strong>[확장 프로그램] > [Apps Script]</strong>에 아래 코드를 붙여넣고 <strong>[배포] > [웹 앱(액세스 권한: 모든 사용자)]</strong>으로 배포한 후 생성된 URL을 왼쪽에 입력하면 실시간 시트 기록이 완성됩니다.
+            </p>
+
+            <textarea
+              id="apps-script-code-box"
+              readonly
+              class="w-full h-72 p-3 rounded-2xl bg-stone-900 text-amber-200 font-mono text-[11px] leading-relaxed border border-stone-700 outline-none resize-none"
+            ></textarea>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ====================================================================
+       모달 1: 교사 비밀번호 인증 모달 (modal-teacher-passcode)
+       ==================================================================== -->
+  <div id="modal-teacher-passcode" class="hidden fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 w-full max-w-sm border-2 border-amber-200 shadow-2xl animate-popup">
+      <div class="text-center mb-4">
+        <div class="w-12 h-12 rounded-2xl bg-amber-100 mx-auto flex items-center justify-center text-2xl mb-2">
+          🔒
+        </div>
+        <h3 class="text-lg font-bold text-stone-800 font-gowun">교사 모드 인증</h3>
+        <p class="text-xs text-stone-500 mt-1">교사용 비밀번호를 입력해 주세요. (기본: 1234)</p>
+      </div>
+
+      <form id="form-teacher-passcode" class="space-y-4">
+        <input
+          type="password"
+          id="teacher-passcode-input"
+          class="w-full px-4 py-2.5 text-center text-lg tracking-widest font-bold rounded-2xl border-2 border-amber-200 focus:border-amber-400 outline-none"
+          placeholder="••••"
+          maxlength="8"
+          required
+        >
+        <div class="flex items-center gap-2">
+          <button type="button" id="btn-close-passcode-modal" class="w-1/2 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-bold transition">
+            취소
+          </button>
+          <button type="submit" class="w-1/2 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition shadow-xs">
+            확인
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       모달 2: 책 및 인물 프로필 카드 모달 (modal-character-profile)
+       ==================================================================== -->
+  <div id="modal-character-profile" class="hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-xl border-2 border-amber-200 shadow-2xl animate-popup max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex items-start justify-between border-b border-stone-100 pb-3 mb-4">
+        <div>
+          <span id="profile-book-author" class="text-xs font-bold text-amber-700">작자 미상 · 한국 고전</span>
+          <h3 id="profile-book-title" class="text-2xl font-bold font-gowun text-stone-800">심청전</h3>
+        </div>
+        <button id="btn-close-profile-modal" class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 text-sm font-bold flex items-center justify-center">
+          ✕
+        </button>
+      </div>
+
+      <!-- 인물 프로필 하이라이트 -->
+      <div class="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-100/60 rounded-2xl p-4 border border-amber-200/90 mb-4 flex items-center gap-4">
+        <div class="relative w-20 h-24 rounded-2xl overflow-hidden border-2 border-amber-300 shadow-md shrink-0 bg-stone-900">
+          <img id="profile-character-image" class="w-full h-full object-cover object-top" src="assets/char_simcheong.jpg" alt="인물 이미지">
+        </div>
+        <div>
+          <span class="text-xs font-semibold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-md border border-amber-200">핫시팅 주인공</span>
+          <h4 id="profile-character-name" class="text-xl font-bold text-stone-900 mt-0.5 font-gowun">심청</h4>
+          <p id="profile-character-title" class="text-xs text-amber-800 font-medium">눈먼 아버지를 극진히 모신 효녀</p>
+          <div class="flex items-center gap-2 mt-2">
+            <span class="text-[11px] font-semibold text-stone-700 bg-white/95 px-2.5 py-0.5 rounded-lg border border-stone-200 shadow-2xs">
+              🎙️ <span id="profile-character-voice">차분하고 다정한 여성 목소리</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 성격 및 시대적 배경 -->
+      <div class="space-y-3 text-xs text-stone-700 leading-relaxed mb-4">
+        <div class="p-3 bg-stone-50 rounded-xl border border-stone-200/60">
+          <strong class="text-stone-900 block mb-1">인물의 성격 및 특징:</strong>
+          <p id="profile-character-personality">효심이 깊고 당차며, 아버지를 위해서라면 희생을 마다하지 않는 성격.</p>
+        </div>
+        <div class="p-3 bg-stone-50 rounded-xl border border-stone-200/60">
+          <strong class="text-stone-900 block mb-1">작품의 시대적 배경:</strong>
+          <p id="profile-character-history">조선 시대. 유교적 효를 가장 숭상하던 사회.</p>
+        </div>
+        <div>
+          <strong class="text-stone-900 block mb-1">줄거리 요약:</strong>
+          <p id="profile-book-plot" class="text-stone-600 line-clamp-3">줄거리 내용이 여기에 표시됩니다.</p>
+        </div>
+      </div>
+
+      <!-- 추천 질문 -->
+      <div class="mb-5">
+        <strong class="text-xs font-bold text-stone-800 block mb-2">💡 이런 질문을 해볼 수 있어요:</strong>
+        <ul id="profile-sample-questions" class="space-y-1.5">
+          <!-- JS 생성 -->
+        </ul>
+      </div>
+
+      <!-- 핫시팅 시작 버튼 -->
+      <button
+        id="btn-start-hotseat-call"
+        class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#E07A5F] to-[#D46B4E] hover:from-[#D46B4E] hover:to-[#C35A3D] text-white font-bold text-base flex items-center justify-center gap-2 shadow-md transition transform active:scale-98"
+      >
+        <span>✨</span>
+        <span>주인공과 핫시팅 영상 통화 시작하기!</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       모달 3: 교사용 도서 추가/수정 모달 (modal-book-form)
+       ==================================================================== -->
+  <div id="modal-book-form" class="hidden fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-2xl border-2 border-amber-200 shadow-2xl animate-popup max-h-[92vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between border-b border-stone-100 pb-3 mb-4">
+        <h3 id="book-form-modal-title" class="text-lg font-bold text-stone-800 font-gowun">
+          새로운 도서 및 핫시팅 인물 등록
+        </h3>
+        <button onclick="window.teacherController.closeBookFormModal()" class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 font-bold flex items-center justify-center">
+          ✕
+        </button>
+      </div>
+
+      <form id="form-teacher-book" class="space-y-4 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block font-bold text-stone-700 mb-1">책 제목 *</label>
+            <input type="text" id="form-book-title" class="w-full px-3 py-2 rounded-xl border border-stone-200 focus:border-amber-400 outline-none text-stone-800" required placeholder="예: 춘향전">
+          </div>
+          <div>
+            <label class="block font-bold text-stone-700 mb-1">글쓴이 / 작가</label>
+            <input type="text" id="form-book-author" class="w-full px-3 py-2 rounded-xl border border-stone-200 focus:border-amber-400 outline-none text-stone-800" placeholder="예: 작자 미상">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block font-bold text-stone-700 mb-1">도서 분야/분류</label>
+            <input type="text" id="form-book-category" class="w-full px-3 py-2 rounded-xl border border-stone-200 focus:border-amber-400 outline-none text-stone-800" placeholder="예: 한국 고전">
+          </div>
+          <div>
+            <label class="block font-bold text-stone-700 mb-1">핫시팅할 인물 이름 *</label>
+            <input type="text" id="form-char-name" class="w-full px-3 py-2 rounded-xl border border-stone-200 focus:border-amber-400 outline-none text-stone-800" required placeholder="예: 성춘향">
+          </div>
+          <div>
+            <label class="block font-bold text-stone-700 mb-1">인물 수식어/역할</label>
+            <input type="text" id="form-char-title" class="w-full px-3 py-2 rounded-xl border border-stone-200 focus:border-amber-400 outline-none text-stone-800" placeholder="예: 굳은 절개를 지킨 여인">
+          </div>
+        </div>
+
+        <!-- 음성(Voice Profile) 선택 & 미리듣기 기능 -->
+        <div class="p-3.5 bg-amber-50/60 border border-amber-200/80 rounded-2xl space-y-1.5">
+          <label class="block font-bold text-stone-800">
+            🎙️ 인물 목소리 (Voice Profile) 선택 *
+          </label>
+          <div class="flex items-center gap-2">
+            <select id="form-char-voice" class="flex-1 px-3 py-2 rounded-xl border border-stone-300 bg-white focus:border-amber-400 outline-none text-stone-800 text-xs font-semibold">
+              <!-- JS 동적 생성 -->
+            </select>
+            <button type="button" id="btn-preview-voice" class="px-3.5 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-xs font-bold transition flex items-center gap-1 shrink-0 shadow-xs">
+              <span>🎧</span>
+              <span>목소리 미리듣기</span>
+            </button>
+          </div>
+          <p class="text-[11px] text-stone-500">
+            학생 모드에서 인물이 답변을 음성(TTS)으로 읽어줄 때 적용되는 고유의 목소리입니다.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-stone-700 mb-1">인물의 성격 및 말투</label>
+            <textarea id="form-char-personality" rows="2" class="w-full p-2.5 rounded-xl border border-stone-200 focus:border-amber-400 outline-none text-stone-800" placeholder="예: 당차고 지혜로우며 절개가 굳음. 예의 바르고 단호한 어조."></textarea>
+          </div>
+          <div>
+            <label class="block font-bold text-stone-700 mb-1">작품의 시대적 배경</label>
+            <textarea id="form-char-history" rows="2" class="w-full p-2.5 rounded-xl border border-stone-200 focus:border-amber-400 outline-none text-stone-800" placeholder="예: 조선 후기 남원. 엄격한 신분제와 탐관오리의 횡포가 있던 시대."></textarea>
+          </div>
+        </div>
+
+        <!-- 줄거리 입력 및 PDF/PPTX 파일 업로드 파서 -->
+        <div class="p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-2xl space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="font-bold text-amber-900 flex items-center gap-1">
+              <span>📄</span>
+              <span>책의 줄거리 내용 (직접 입력 또는 파일 업로드 파싱) *</span>
+            </label>
+            <label class="cursor-pointer px-2.5 py-1 rounded-lg bg-white hover:bg-amber-100 border border-amber-300 text-amber-800 font-semibold transition">
+              <span>📁 PDF / PPTX 파일 불러오기</span>
+              <input type="file" id="book-file-upload" accept=".pdf,.pptx,.txt" class="hidden">
+            </label>
+          </div>
+
+          <div id="file-upload-status" class="text-[11px]"></div>
+
+          <textarea
+            id="form-book-plot"
+            rows="4"
+            class="w-full p-2.5 rounded-xl border border-amber-200 bg-white focus:border-amber-400 outline-none text-stone-800"
+            required
+            placeholder="책의 전체적인 줄거리를 입력하거나, 교사용 수업 자료(PDF/PPTX)를 첨부하면 텍스트가 자동으로 채워집니다."
+          ></textarea>
+        </div>
+
+        <!-- 핵심 사실 (밑줄 표시의 기준) -->
+        <div>
+          <label class="block font-bold text-stone-700 mb-1">
+            책 속 핵심 사실들 (선택: 줄바꿈으로 구분, 인물이 밑줄 그으며 말할 근거)
+          </label>
+          <textarea
+            id="form-book-facts"
+            rows="3"
+            class="w-full p-2.5 rounded-xl border border-stone-200 focus:border-amber-400 outline-none text-stone-800"
+            placeholder="예:&#10;단오날 광한루 그네를 타다 이몽룡을 만났다.&#10;변학도의 수청을 거절하여 옥에 갇혔다.&#10;암행어사가 된 이몽룡에 의해 구출되었다."
+          ></textarea>
+        </div>
+
+        <!-- 인물 웹툰 참고 이미지 업로드 (필수 항목) -->
+        <div class="p-3.5 bg-amber-50/80 rounded-2xl border-2 border-amber-300 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block font-bold text-stone-800 flex items-center gap-1.5">
+              <span>🎨</span>
+              <span>인물 참고 이미지 (필수: 웹툰체 베이스 아바타 생성용) *</span>
+            </label>
+            <span class="text-[11px] font-bold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-md">필수 첨부</span>
+          </div>
+          <p class="text-[11px] text-stone-600">교과서 인물화, 역사 사진, 일러스트 또는 학생이 그린 캐릭터 스케치 이미지를 등록해 주세요.</p>
+          <div class="flex items-center gap-3">
+            <input type="file" id="character-image-upload" accept="image/*" class="flex-1 text-xs text-stone-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-200 file:text-amber-900 hover:file:bg-amber-300 cursor-pointer">
+            <img id="image-upload-preview" class="w-12 h-12 rounded-xl object-cover border-2 border-amber-400 shadow-xs hidden" alt="미리보기">
+          </div>
+          <p id="image-upload-notice" class="hidden text-[11px] text-emerald-800 font-semibold bg-emerald-50 p-2 rounded-xl border border-emerald-200">
+            ✨ 참고 이미지를 분석하여 웹툰체 베이스 아바타가 생성되었으며, 화상 대화 시 감정별 눈/코/입이 실시간 페이스 스왑 합성됩니다!
+          </p>
+        </div>
+
+        <div class="pt-3 border-t border-stone-100 flex items-center justify-end gap-2">
+          <button type="button" onclick="window.teacherController.closeBookFormModal()" class="px-4 py-2 rounded-xl bg-stone-100 text-stone-600 font-semibold hover:bg-stone-200 transition">
+            취소
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold transition shadow-xs">
+            저장 및 배포
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       모달 4: 부적절 입력 3회 감지 제재 모달 (modal-penalty-strike)
+       ==================================================================== -->
+  <div id="modal-penalty-strike" class="hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-md border-4 border-rose-400 shadow-2xl text-center animate-popup">
+      <div class="w-16 h-16 rounded-full bg-rose-100 text-rose-600 mx-auto flex items-center justify-center text-3xl mb-3 shadow-inner animate-pulse">
+        ⚠️
+      </div>
+      <span class="inline-block px-3 py-1 rounded-full bg-rose-100 text-rose-800 text-xs font-bold mb-2">
+        주의 알림 3회 누적
+      </span>
+      <h3 class="text-xl font-bold text-stone-900 font-gowun">
+        바른 언어 사용 지도가 필요합니다
+      </h3>
+      <p class="text-xs text-stone-600 mt-2 leading-relaxed">
+        부적절한 입력(비속어 또는 무의미한 반복 도배)이 3회 이상 감지되어 <strong>선생님께 대화 내용이 즉시 전달되었습니다.</strong>
+      </p>
+      <div class="my-4 p-3 bg-rose-50 rounded-2xl text-xs text-rose-800 border border-rose-200">
+        사유: <span id="penalty-reason-text" class="font-bold">의미 없는 반복 입력</span>
+      </div>
+      <p class="text-[11px] text-stone-500 mb-5">
+        선생님과 이야기를 나눈 후 다시 바르고 고운 말로 참여해 주세요.
+      </p>
+      <button
+        type="button"
+        id="btn-dismiss-penalty"
+        class="w-full py-3 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm shadow-md transition"
+      >
+        도서관 서가로 돌아가기
+      </button>
+    </div>
+  </div>
+
+  <!-- 모듈 스크립트 로드 -->
+  <script src="js/store.js"></script>
+  <script src="js/contentParser.js"></script>
+  <script src="js/filterSystem.js"></script>
+  <script src="js/sheetsLogger.js"></script>
+  <script src="js/characterAvatar.js"></script>
+  <script src="js/speechEngine.js"></script>
+  <script src="js/hotseatEngine.js"></script>
+  <script src="js/teacher.js"></script>
+  <script src="js/student.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
